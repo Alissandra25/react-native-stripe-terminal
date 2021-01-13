@@ -9,7 +9,7 @@ export interface ServiceOptions {
   policy: string;
   deviceType: string;
   discoveryMode: string;
-  simulated: number;
+  simulated: boolean;
   emitter: EventEmitter;
   desiredReader: null | string;
 }
