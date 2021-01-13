@@ -39,9 +39,10 @@ export default function createConnectionService(
     desiredReader: null | string;
 
     constructor({ policy, deviceType, discoveryMode, simulated }) {
+      console.log(deviceType, StripeTerminal)
       this.policy = policy;
-      this.deviceType = deviceType || StripeTerminal.DeviceTypeChipper2X;
-      this.discoveryMode = discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;
+      this.deviceType = deviceType || StripeTerminal?.DeviceTypeChipper2X;
+      this.discoveryMode = discoveryMode || StripeTerminal?.DiscoveryMethodBluetoothProximity;
       this.simulated = simulated || 0;
 
       if (STCS.Policies.indexOf(policy) === -1) {
