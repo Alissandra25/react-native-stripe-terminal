@@ -1,7 +1,7 @@
 // @ts-ignore
 import EventEmitter from 'eventemitter3';
 // @ts-ignore
-import AsyncStorage from '@react-native-community/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import * as types from './types';
 
@@ -39,6 +39,7 @@ export default function createConnectionService(
     desiredReader: null | string;
 
     constructor({ policy, deviceType, discoveryMode, simulated }) {
+      console.log(StripeTerminal, deviceType);
       this.policy = policy;
       this.deviceType = deviceType || StripeTerminal.DeviceTypeChipper2X;
       this.discoveryMode = discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;

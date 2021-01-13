@@ -263,31 +263,31 @@ export class StripeTerminal {
       RNStripeTerminal.abortInstallUpdate();
     });
 
-  startService(options: types.ServiceOptions) {
-    // if (typeof options === 'string') {
-    //   options = { policy: options };
-    // }
-
-    if (this._currentService) {
-      return Promise.reject(
-        'A service is already running. You must stop it using `stopService` before starting a new service.',
-      );
-    }
-
-    this._currentService = createConnectionService(this, options);
-    this._currentService.start();
-    return this._currentService;
-  }
-
-  stopService() {
-    if (!this._currentService) {
-      return Promise.resolve();
-    }
-
-    return this._currentService.stop().then(() => {
-      this._currentService = null;
-    });
-  }
+  // startService(options: types.ServiceOptions) {
+  //   // if (typeof options === 'string') {
+  //   //   options = { policy: options };
+  //   // }
+  //
+  //   if (this._currentService) {
+  //     return Promise.reject(
+  //       'A service is already running. You must stop it using `stopService` before starting a new service.',
+  //     );
+  //   }
+  //
+  //   this._currentService = createConnectionService(this, options);
+  //   this._currentService.start();
+  //   return this._currentService;
+  // }
+  //
+  // stopService() {
+  //   if (!this._currentService) {
+  //     return Promise.resolve();
+  //   }
+  //
+  //   return this._currentService.stop().then(() => {
+  //     this._currentService = null;
+  //   });
+  // }
 }
 
 const StripeTerminal_ = new StripeTerminal();
