@@ -211,10 +211,11 @@ RCT_EXPORT_METHOD(installUpdate) {
 }
 
 - (NSDictionary *)serializeUpdate:(SCPReaderSoftwareUpdate *)update {
-    return @{
-             @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
-             @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @""
-             };
+    NSDictionary * updateDictionary = @{@"update" : @{
+        @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
+        @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @""
+    }};
+  return updateDictionary;
 }
 
 - (NSDictionary *)serializePaymentIntent:(SCPPaymentIntent *)intent {
@@ -281,6 +282,12 @@ RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
             params.onBehalfOf = options[@"onBehalfOf"];
             params.transferDataDestination = options[@"transferDataDestination"];
         }
+        params.metadata = [RCTConvert NSDictionary:options[@"metadata"]];
+        params.stripeDescription = [RCTConvert NSString:options[@"description"]];
+        params.statementDescriptor = [RCTConvert NSString:options[@"statementDescriptor"]];
+        params.receiptEmail = [RCTConvert NSString:options[@"receiptEmail"]];
+        params.customer = [RCTConvert NSString:options[@"customer"]];
+        params.transferGroup = [RCTConvert NSString:options[@"transferGroup"]];
 
         [SCPTerminal.shared createPaymentIntent:params completion:onIntent];
     }
@@ -293,12 +300,18 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
     SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
 
     NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
-    
+
     if (applicationFeeAmount) {
         params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
         params.onBehalfOf = options[@"onBehalfOf"];
         params.transferDataDestination = options[@"transferDataDestination"];
     }
+    params.metadata = [RCTConvert NSDictionary:options[@"metadata"]];
+    params.stripeDescription = [RCTConvert NSString:options[@"description"]];
+    params.statementDescriptor = [RCTConvert NSString:options[@"statementDescriptor"]];
+    params.receiptEmail = [RCTConvert NSString:options[@"receiptEmail"]];
+    params.customer = [RCTConvert NSString:options[@"customer"]];
+    params.transferGroup = [RCTConvert NSString:options[@"transferGroup"]];
 
     [SCPTerminal.shared createPaymentIntent:params completion:^(SCPPaymentIntent * _Nullable intent_, NSError * _Nullable error) {
         intent = intent_;
@@ -355,18 +368,22 @@ RCT_EXPORT_METHOD(processPayment) {
 }
 
 RCT_EXPORT_METHOD(cancelPaymentIntent) {
-    [SCPTerminal.shared cancelPaymentIntent:intent completion:^(SCPPaymentIntent * _Nullable canceledIntent, NSError * _Nullable error) {
-        if (error) {
-            [self sendEventWithName:@"paymentIntentCancel" body:@{
-                                                                    @"error": [error localizedDescription],
-                                                                    @"code": @(error.code),
-                                                                    @"intent": [self serializePaymentIntent:intent]
-                                                                    }];
+    if (intent) {
+        [SCPTerminal.shared cancelPaymentIntent:intent completion:^(SCPPaymentIntent * _Nullable canceledIntent, NSError * _Nullable error) {
+            if (error) {
+                [self sendEventWithName:@"paymentIntentCancel" body:@{
+                                                                        @"error": [error localizedDescription],
+                                                                        @"code": @(error.code),
+                                                                        @"intent": [self serializePaymentIntent:intent]
+                                                                        }];
 
-        } else {
-            [self sendEventWithName:@"paymentIntentCancel" body:@{@"intent": [self serializePaymentIntent:canceledIntent]}];
-        }
-    }];
+            } else {
+                [self sendEventWithName:@"paymentIntentCancel" body:@{@"intent": [self serializePaymentIntent:canceledIntent]}];
+            }
+        }];
+    } else {
+        [self sendEventWithName:@"paymentIntentCancel" body:@{}];
+    }
 }
 
 - (void)terminal:(SCPTerminal *)terminal didRequestReaderInput:(SCPReaderInputOptions)inputOptions {
@@ -377,10 +394,19 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
 }
 
 - (void)terminal:(SCPTerminal *)terminal didRequestReaderDisplayMessage:(SCPReaderDisplayMessage)displayMessage {
-    [self sendEventWithName:@"didRequestReaderDisplayMessage" body:
-     @{
-       @"text": [SCPTerminal stringFromReaderDisplayMessage:displayMessage]
-       }];
+    NSString* const SCPReaderDisplayMessageToStringMap[] = {
+        [SCPReaderDisplayMessageRetryCard] = @"RetryCard",
+        [SCPReaderDisplayMessageInsertCard] = @"InsertCard",
+        [SCPReaderDisplayMessageInsertOrSwipeCard] = @"InsertOrSwipeCard",
+        [SCPReaderDisplayMessageSwipeCard] = @"SwipeCard",
+        [SCPReaderDisplayMessageRemoveCard] = @"RemoveCard",
+        [SCPReaderDisplayMessageMultipleContactlessCardsDetected] = @"MultipleContactlessCardsDetected",
+        [SCPReaderDisplayMessageTryAnotherReadMethod] = @"TryAnotherReadMethod",
+        [SCPReaderDisplayMessageTryAnotherCard] = @"TryAnotherCard"
+    };
+
+    [self sendEventWithName:@"didRequestReaderDisplayMessage"
+          body: SCPReaderDisplayMessageToStringMap[displayMessage]];
 }
 
 - (void)terminal:(SCPTerminal *)terminal didReportReaderEvent:(SCPReaderEvent)event info:(NSDictionary *)info {
